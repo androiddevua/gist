@@ -1,7 +1,5 @@
 Snippet shows simple implementation of custom `Toast` that can be easily used in hole application.
 
-![Header](/assets/images/gists/utilst-custom-toast-1.png)
-
 ####Key notes 
 
 - Use `Toast` to show simple informative messages only
