@@ -1,4 +1,4 @@
-Some times we need to hide/show keyboard after some actions. This class will help to do this :
+Sometimes we need to hide/show keyboard after some actions. This class will help to do this :
 
 ```java
 public class KeyboardUtils {
