@@ -1,3 +1,5 @@
+### View: ActivityToast
+
 Snippet shows implementation of custom `Toast` that:
 
 - Have similar interface as original `Toast` class
@@ -5,9 +7,9 @@ Snippet shows implementation of custom `Toast` that:
 - Have possibility to set `length` in `millis`
 - Have possibility to set show and cancel animation
 - Lives only with initialized `Activity`
+- Have screen orientation change support
 
-Current Limitations:
-- No screen orientation change are supported
+Image example of you can do is [here][1], and layout from it [here][2].
 
 #### Usage:
 ```java
@@ -44,10 +46,39 @@ Current Limitations:
     }
 ```
 
+To handle screen orientation change :
+```java
+    private ActivityToast mToast;
+    
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        //...
+        
+        mToast = new ActivityToast(this, toastView);
+        //init your toast
+        
+        mToast.restoreInstanceState(savedInstanceState);
+    }
+    
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (mToast != null) {
+            mToast.saveInstanceState(outState);
+        }
+    } 
+```
+
 #### Sources
+
+```java
+
 import android.app.Activity;
+import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -61,6 +92,7 @@ public class ActivityToast {
     public static final long LENGTH_SHORT = 2000;
     public static final long LENGTH_LONG = 3000;
     public static final int DEFAULT_ANIMATION_DURATION = 400;
+    public static final String BUNDLE_IS_SHOWING = "com.ym.ActivityToast.IS_SHOWING";
 
     private final Activity mActivity;
     private FrameLayout.LayoutParams mLayoutParams;
@@ -80,6 +112,7 @@ public class ActivityToast {
     private Animation.AnimationListener mCancelAnimationListener;
 
     private boolean mIsAnimationRunning;
+    private boolean mIsShown;
 
     /**
      * @param activity Toast will be shown at top of the widow of this Activity
@@ -98,11 +131,11 @@ public class ActivityToast {
 
         mShowAnimation = new AlphaAnimation(0.0f, 1.0f);
         mShowAnimation.setDuration(DEFAULT_ANIMATION_DURATION);
-        mShowAnimation.setAnimationListener(mHidenShowListener);
+        mShowAnimation.setAnimationListener(mHiddenShowListener);
 
         mCancelAnimation = new AlphaAnimation(1.0f, 0.0f);
         mCancelAnimation.setDuration(DEFAULT_ANIMATION_DURATION);
-        mCancelAnimation.setAnimationListener(mHidenCancelListener);
+        mCancelAnimation.setAnimationListener(mHiddenCancelListener);
 
         mToastView = toastView;
         mToastHolder.addView(mToastView);
@@ -121,6 +154,7 @@ public class ActivityToast {
     public void show() {
         if (!isShowing()) {
             mParent.addView(mToastHolder);
+            mIsShown = true;
 
             if (mShowAnimation != null) {
                 mToastHolder.startAnimation(mShowAnimation);
@@ -137,12 +171,13 @@ public class ActivityToast {
             } else {
                 mParent.removeView(mToastHolder);
                 mHandler.removeCallbacks(mCancelTask);
+                mIsShown = false;
             }
         }
     }
 
     public boolean isShowing() {
-        return mToastHolder.isShown();
+        return mIsShown;
     }
 
     /**
@@ -191,6 +226,27 @@ public class ActivityToast {
         return mToastView;
     }
 
+    public void saveInstanceState(@Nullable Bundle bundle) {
+        if (bundle != null) {
+            bundle.putBoolean(BUNDLE_IS_SHOWING, isShowing());
+        }
+    }
+
+    public void restoreInstanceState(@Nullable Bundle savedInstanceState) {
+        if (savedInstanceState == null) {
+            return;
+        }
+
+        boolean isShowing = savedInstanceState.getBoolean(BUNDLE_IS_SHOWING, false);
+        if (isShowing) {
+            mHandler.removeCallbacks(mCancelTask);
+            mParent.addView(mToastHolder);
+            mIsShown = true;
+            mHandler.postDelayed(mCancelTask, mLength);
+        }
+    }
+
+
     private Runnable mCancelTask = new Runnable() {
         @Override
         public void run() {
@@ -198,7 +254,7 @@ public class ActivityToast {
         }
     };
 
-    private Animation.AnimationListener mHidenShowListener = new Animation.AnimationListener() {
+    private Animation.AnimationListener mHiddenShowListener = new Animation.AnimationListener() {
         @Override
         public void onAnimationStart(Animation animation) {
             if (mShowAnimationListener != null) {
@@ -227,7 +283,7 @@ public class ActivityToast {
         }
     };
 
-    private Animation.AnimationListener mHidenCancelListener = new Animation.AnimationListener() {
+    private Animation.AnimationListener mHiddenCancelListener = new Animation.AnimationListener() {
         @Override
         public void onAnimationStart(Animation animation) {
             if (mCancelAnimationListener != null) {
@@ -247,6 +303,7 @@ public class ActivityToast {
             }
 
             mIsAnimationRunning = false;
+            mIsShown = false;
         }
 
         @Override
@@ -257,5 +314,7 @@ public class ActivityToast {
         }
     };
 }
-
 ```
+
+[1]: https://github.com/yakivmospan/android-codeview/blob/gh-pages/assets/images/gists/activity-toast.gif
+[2]: https://github.com/yakivmospan/android-codeview/blob/gh-pages/gists/Utils.%20ToastFactory.md
