@@ -317,4 +317,4 @@ public class ActivityToast {
 ```
 
 [1]: https://github.com/yakivmospan/android-codeview/blob/gh-pages/assets/images/gists/activity-toast.gif
-[2]: https://github.com/yakivmospan/android-codeview/blob/gh-pages/gists/Utils.%20ToastFactory.md
+[2]: https://github.com/yakivmospan/android-codeview/blob/gh-pages/gists/view/activity-toast-factory.md
